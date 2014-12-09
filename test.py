@@ -1,6 +1,6 @@
 import os
 
-from pygit2 import clone_repository, GitError
+from pygit2 import clone_repository, discover_repository, Repository, GitError
 from flask import Flask, request, make_response
 
 import settings
@@ -8,7 +8,7 @@ import settings
 app = Flask(__name__)
 
 
-def return_text(*argc, **argv):
+def text(*argc, **argv):
     resp = make_response(*argc, **argv)
     resp.headers['Content-Type'] = 'text/plain'
     return resp
@@ -29,20 +29,27 @@ def repo():
     repo_name = repo_url.split('/')[-1]
 
     if not repo_name:
-        return_text('url must not be terminated by a slash', 400)
+        return text('url must not be terminated by a slash', 400)
 
     repo_path = os.path.join(settings.REPOS_DIR, repo_name)
 
+    if os.path.exists(repo_path):
+        repo_path = discover_repository(repo_path)
+        repo = Repository(repo_path)
+
+        try:
+            origin = repo.remotes[0]
+        except IndexError:
+            return text('no remote')
+
+        return str(origin.name)
+
     try:
-        clone_repository(repo_url, repo_path)
+        repo = clone_repository(repo_url, repo_path)
     except GitError as e:
-        resp = make_response(str(e), 400)
-        resp.headers['Content-Type'] = 'text/plain'
-        return resp
+        return text(str(e), 400)
     except Exception as e:
-        resp = make_response(str(e), 400)
-        resp.headers['Content-Type'] = 'text/plain'
-        return resp
+        return text(str(e), 400)
 
     return 'cloned'
 
