@@ -31,7 +31,7 @@ def repo():
     if not repo_name:
         return text('url must not be terminated by a slash', 400)
 
-    repo_path = os.path.join(settings.REPOS_DIR, repo_name)
+    repo_path = os.path.join(settings.REPOS_DIR, repo_name + '.git')
 
     if os.path.exists(repo_path):
         repo_path = discover_repository(repo_path)
@@ -45,7 +45,8 @@ def repo():
         return str(origin.name)
 
     try:
-        repo = clone_repository(repo_url, repo_path)
+        # We only need a bare repository, not a full workdir
+        repo = clone_repository(repo_url, repo_path, bare=True)
     except GitError as e:
         return text(str(e), 400)
     except Exception as e:
