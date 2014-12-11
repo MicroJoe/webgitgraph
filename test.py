@@ -1,9 +1,11 @@
 import os
+import io
 
 from pygit2 import clone_repository, discover_repository, Repository, GitError
 from flask import Flask, request, make_response
 
 import settings
+import gitgraph
 
 app = Flask(__name__)
 
@@ -37,12 +39,19 @@ def repo():
         repo_path = discover_repository(repo_path)
         repo = Repository(repo_path)
 
-        try:
-            origin = repo.remotes[0]
-        except IndexError:
-            return text('no remote')
+        # try:
+        #    origin = repo.remotes[0]
+        # except IndexError:
+        #    return text('no remote')
 
-        return str(origin.name)
+        # origin.fetch()
+
+        data = gitgraph.retrieve_repo_activity(repo)['continuous_days_commits']
+
+        res = io.StringIO()
+        gitgraph.draw_activity([day for day in data], res)
+
+        return res.getvalue()
 
     try:
         # We only need a bare repository, not a full workdir
