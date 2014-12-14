@@ -2,6 +2,9 @@
 
 A web wrapper for pygitgraph.
 
+This is only a proof of concept and should NOT be used in any kind of
+production environment.
+
 ## Running
 
 Once all dependencies are installed, you can run the Flask server:
